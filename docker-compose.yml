@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  eureka-server:
+    container_name: eureka
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+  notification-app:
+    container_name: notification-app
+    build:
+      context: ./notification-app
+      dockerfile: Dockerfile
+    environment:
+      - eureka.client.service-url.defaultZone=http://eureka-server:8761/eureka/
+    depends_on:
+      - eureka-server
+    ports:
+      - "8088:8088"
+  customer-app:
+    container_name: customer-app
+    build:
+      context: ./customer-app
+      dockerfile: Dockerfile
+    environment:
+      - eureka.client.service-url.defaultZone=http://eureka-server:8761/eureka/
+      - DB_URL=postgres
+      - DB_USER=app_user
+      - DB_PASSWORD=customer_app_password
+    depends_on:
+      - eureka-server
+      - postgres
+    ports:
+      - "8080:8080"
+  postgres:
+    image: postgres:9.4
+    environment:
+      - POSTGRES_USER=app_user
+      - POSTGRES_PASSWORD=customer_app_password
+      - POSTGRES_DB=customer_app_db
+    ports:
+      - 5432:5432
